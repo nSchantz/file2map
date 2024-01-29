@@ -4,7 +4,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
 # Set up OAuth 2.0 credentials
-CLIENT_SECRETS_FILE = "./client_secret.json"  # Replace with your client secrets file
+CLIENT_SECRETS_FILE = "./api/client_secret.json"
 API_NAME = "youtube"
 API_VERSION = "v3"
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
@@ -28,7 +28,7 @@ request_body = {
         "tags": video_tags
     },
     "status": {
-        "privacyStatus": "private"  # You can change this to "public" if you want the video to be public
+        "privacyStatus": "public"
     }
 }
 
