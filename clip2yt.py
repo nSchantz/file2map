@@ -4,7 +4,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
 # Set up OAuth 2.0 credentials
-CLIENT_SECRETS_FILE = "path/to/client_secrets.json"  # Replace with your client secrets file
+CLIENT_SECRETS_FILE = "./client_secret.json"  # Replace with your client secrets file
 API_NAME = "youtube"
 API_VERSION = "v3"
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
@@ -32,7 +32,7 @@ request_body = {
     }
 }
 
-media = MediaFileUpload("path/to/your/video.mp4", chunksize=-1, resumable=True)
+media = MediaFileUpload("", chunksize=-1, resumable=True)
 
 request = youtube.videos().insert(
     part=",".join(request_body.keys()),
@@ -46,4 +46,4 @@ while response is None:
     if status:
         print(f"Uploaded {int(status.progress() * 100)}%")
 
-print(f"Video uploaded successfully! Video ID: {response['id']}"
+print(f"Video uploaded successfully! Video ID: {response['id']}")
