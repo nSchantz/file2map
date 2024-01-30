@@ -1,4 +1,4 @@
-import clip2yt
+import clip2yt as c2yt
 import os
 import sys
 import filetypes as ft
@@ -21,6 +21,9 @@ def main():
     tag = sys.argv[3]
 
     # Check Dir Exist
+    if not os.path.exists(dir):
+        print(f'Path \'{dir}\' does not exist. Exiting...')
+        exit()
 
     json_data = get_json(WEBSITE_PATH, type)
 
@@ -31,7 +34,7 @@ def main():
         print(f'\n-----------------------------')
 
     print('All files uploaded. Writing json file.')
-    write_json(json_data, WEBSITE_PATH, type)
+    # write_json(json_data, WEBSITE_PATH, type)
 
 
 def get_json(web_dir, type):
@@ -69,7 +72,7 @@ def gen_file(file, json_data, file_dir, type, tag):
     if type is ft.IMAGE_TYPE:
         success = parse_img_metadata(file, file_data)
     elif type is ft.VIDEO_TYPE:
-        success = parse_vid_name(file)
+        success = parse_vid_name(file, file_data)
     elif type is ft.TEXT_TYPE:
         print("Todo")
     if not success:
@@ -88,7 +91,7 @@ def gen_file(file, json_data, file_dir, type, tag):
             return
 
         # upload clip and get youtube url
-        url = upload(render)
+        url = c2yt.upload(render)
         if url is None:
             print(f'Video \'{file}\' failed to upload, skipping...')
             return
@@ -103,6 +106,7 @@ def gen_file(file, json_data, file_dir, type, tag):
 
     print(f'File \'{file}\' uploaded.')
     print(f'File Metadata: {file_data}.')
+    print(f'Debug json: {json_data}')
 
 def new_file_check(file_data, json_data):
     for marker in json_data['markers']:
@@ -143,22 +147,21 @@ def move_img(img, file_dir, web_dir):
 
     return rsrc_path
 
-# clips should follow the naming scheme:  tag_state_poslong_poslat.mp4
-def parse_vid_name(vid_name):
+# clips should follow the naming scheme:  poslong_poslat_.mp4
+def parse_vid_name(vid_name, vid_data):
     v = vid_name.split('_')
 
-    vid_data = VidData
-
     try:
-        vid_data = VidData(None, v[0], v[1], int(v[2]), int(v[3]), None) #need to change this
+        vid_data.long = float(v[0])
+        vid_data.lat = float(v[1])
     except IndexError as e:
-        print(f'Video name \'{vid_name}\' does not contain all components:\n\'tag_state_poslat_poslot\'.')
-        return None
+        print(f'Video name \'{vid_name}\' does not contain all components:\n\'poslat_poslot\'.')
+        return False
     except ValueError as e:
         print(f'Longitude or Latitude in video name \'{vid_name}\' are not valid numbers.')
-        return None
+        return False
 
-    return vid_data
+    return True
 
 
 def render_vid(video):
