@@ -13,11 +13,15 @@ class VidData:
 def main():
     # open directory with clips
 
-
     # open map.json for reading/writing
     with open('./map-vid.json', 'rw') as json:
         # for each clip in directory...
         for video in videos:
+
+            # check that the video id is not already in the json file
+            if not new_vid_check(video, json):
+                continue
+            
             # clips should follow the naming scheme:  tag_state_poslong_poslat.mp4
             vid_data = parse_name(video)
             if vid_data is None:
@@ -62,6 +66,9 @@ def parse_name(vid_name):
         return None
 
     return vid_data
+
+def new_vid_check(video, json):
+    print("Stub")
 
 def assign_id(vid_data):
     print("Stub")
