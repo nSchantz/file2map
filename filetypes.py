@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 
 IMAGE_TYPE = 0
 VIDEO_TYPE = 1

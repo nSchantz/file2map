@@ -7,7 +7,7 @@ import hashlib
 import shutil
 import exiftool as et
 
-WEBSITE_PATH = '../website'
+WEBSITE_PATH = '../website' #prob want absolute path
 HASH_BYTES = 1024
 
 def main():
@@ -23,14 +23,15 @@ def main():
     # Check Dir Exist
 
     json_data = get_json(WEBSITE_PATH, type)
-    print(f'Loaded json: {json_data}')
 
     # open directory with files
     for file in os.listdir(dir):
-        print(f'Consuming file \'{file}\'')
+        print(f'Processing file \'{file}\'...')
         gen_file(file, json_data, dir, type, tag)
+        print(f'\n-----------------------------')
 
-    #write_json(json_data, WEBSITE_PATH, type)
+    print('All files uploaded. Writing json file.')
+    write_json(json_data, WEBSITE_PATH, type)
 
 
 def get_json(web_dir, type):
@@ -61,7 +62,7 @@ def gen_file(file, json_data, file_dir, type, tag):
     
     # check that the file id is not already in its associated json data
     if not new_file_check(file_data, json_data):
-        print(f'File \'{file}\' already exists, skipping...')
+        print(f'File \'{file}\' already exists, skipping... (id={file_data.id})')
         return
 
     # parsing metadata about the file
@@ -70,7 +71,7 @@ def gen_file(file, json_data, file_dir, type, tag):
     elif type is ft.VIDEO_TYPE:
         success = parse_vid_name(file)
     elif type is ft.TEXT_TYPE:
-        print("Do text")
+        print("Todo")
     if not success:
         print(f'File \'{file}\' metadata failed to parse, skipping...')
         return    
@@ -95,12 +96,13 @@ def gen_file(file, json_data, file_dir, type, tag):
         # store the youtube link for the video
         vid_data.url = url
     elif type is ft.TEXT_TYPE:
-        print("Do Text")
+        print("Todo")
 
     # update json
     update_json(file_data, json_data)
 
-    print(file_data)
+    print(f'File \'{file}\' uploaded.')
+    print(f'File Metadata: {file_data}.')
 
 def new_file_check(file_data, json_data):
     for marker in json_data['markers']:
@@ -148,7 +150,7 @@ def parse_vid_name(vid_name):
     vid_data = VidData
 
     try:
-        vid_data = VidData(None, v[0], v[1], int(v[2]), int(v[3]), None)
+        vid_data = VidData(None, v[0], v[1], int(v[2]), int(v[3]), None) #need to change this
     except IndexError as e:
         print(f'Video name \'{vid_name}\' does not contain all components:\n\'tag_state_poslat_poslot\'.')
         return None
@@ -164,11 +166,11 @@ def render_vid(video):
 
 
 def update_json(file_data, json_data):
-    print("Stub")
-
+    file_data_dict = ft.asdict(file_data)
+    json_data['markers'].append(file_data_dict)
 
 def write_json(json_data, web_dir, type):
-    map_path = f'web_dir/{resources}'
+    map_path = f'{web_dir}/resources'
 
     if type is ft.IMAGE_TYPE:
         f = open(f'{map_path}/map-img.json', 'w')
@@ -177,7 +179,7 @@ def write_json(json_data, web_dir, type):
     elif type is ft.TEXT_TYPE:
         f = open(f'{map_path}/map-txt.json', 'w')
 
-    f.write(json_data)
+    json.dump(json_data, f, indent=2)
     f.close()
     
 
