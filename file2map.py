@@ -5,7 +5,7 @@ import types
 import json
 import hashlib
 
-WEBSITE_PATH = '../website/'
+WEBSITE_PATH = '../website'
 
 def main():
     if len(sys.argv) != 3:
@@ -20,20 +20,22 @@ def main():
     
     # open directory with files
     with open(dir, 'rw') as dir:   
-        json_data = get_json(type)
+        json_data = get_json(WEBSITE_PATH, type)
             # for each file in directory...
             for file in files:
                 gen_file(file, json_data, type)
-                write_json(json_data)
+                write_json(json_data, WEBSITE_PATH, type)
 
 
-def get_json(type):
+def get_json(web_dir, type):
+    map_path = f'web_dir/{resources}'
+    
     if type is IMAGE_TYPE:
-        f = open('./map-img.json')
+        f = open(f'{map_path}/map-img.json', 'r')
     elif type is VIDEO_TYPE:
-        f = open('./map-vid.json')
+        f = open(f'{map_path}/map-vid.json', 'r')
     elif type is TEXT_TYPE:
-        f = open('./map-txt.json')
+        f = open(f'{map_path}/map-txt.json', 'r')
     else:
         print('File Type is invalid. Exiting...')
         exit()
@@ -44,8 +46,14 @@ def get_json(type):
 
 
 def gen_file(file, json_data, type):
+    file_data = FileData()
+    
+    # file is sha256'd for storage and ID assigning
+    assign_id(file, file_data)
+    
     # check that the file id is not already in its associated json data
-    if not new_file_check(file, json_data):
+    if not new_file_check(file_data, json_data):
+        print(f'File \'{file}\' already exists, skipping...')
         return
 
     # parsing metadata about the file
@@ -58,13 +66,7 @@ def gen_file(file, json_data, type):
     if file_data is None:
         print(f'File \'{file}\' metadata failed to parse, skipping...')
         return    
-
-    # file is sha256'd for storage and ID assigning
-    ret = assign_id(file_data)
-    if ret is None:
-        print(f'File \'{file}\' failed to obtain an id, skipping...')
-        return
-
+    
     # uploading file
     if type is IMAGE_TYPE:
         # move image to website resource dir. store the path to image 
@@ -90,18 +92,23 @@ def gen_file(file, json_data, type):
     # update json
     update_json(file_data, json_data)
 
-def new_file_check(file_data, json):
-    print("Stub")
+def new_file_check(file_data, json_data):
+    for marker in json_data['markers']:
+        if marker['id'] == file_data.id:
+            return False
 
-def assign_id(file_data):
-    print("Stub")
+    return True
 
-def parse_img_metadata(img, web_dir):
+def assign_id(file, file_data):
+    file_data.id = hashlib.sha256(file).hexdigest()
+
+def parse_img_metadata(img):
     print("Stub")
 
     return path
 
-def move_img(img, )
+def move_img(img, web_dir):
+    print("Stub")
 
 
 # clips should follow the naming scheme:  tag_state_poslong_poslat.mp4
@@ -126,13 +133,23 @@ def render_vid(video):
     print("Stub")
 
 
-def update_json(file_data, json):
+def update_json(file_data, json_data):
     print("Stub")
-    json.flush()
-    os.fsync()
 
-def write_json(json):
-    print("Stub")
+
+def write_json(json_data, web_dir, type):
+    map_path = f'web_dir/{resources}'
+
+    if type is IMAGE_TYPE:
+        f = open(f'{map_path}/map-img.json', 'w')
+    elif type is VIDEO_TYPE:
+        f = open(f'{map_path}/map-vid.json', 'w')
+    elif type is TEXT_TYPE:
+        f = open(f'{map_path}/map-txt.json', 'w')
+
+    f.write(json_data)
+    f.close()
     
+
 if __name__ == '__main__':
     main()
