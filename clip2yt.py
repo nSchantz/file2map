@@ -53,5 +53,5 @@ def upload(video_title, video_description, video_tags):
 
     if response['id']:
         return response['id']
-    else
+    else:
         return None
