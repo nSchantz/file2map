@@ -3,7 +3,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
      
-def upload(video_title, video_description, video_tags): 
+def upload(render, video_title, video_description): 
     # Set up OAuth 2.0 credentials
     CLIENT_SECRETS_FILE = "./api/client_secret.json"
     API_NAME = "youtube"
@@ -26,7 +26,7 @@ def upload(video_title, video_description, video_tags):
         "snippet": {
             "title": video_title,
             "description": video_description,
-            "tags": video_tags
+            "tags": ["travel", "motorcycle", "solo travel", "cross country"]
         },
         "status": {
             "privacyStatus": "public"

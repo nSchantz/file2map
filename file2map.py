@@ -10,10 +10,13 @@ import exiftool as et
 WEBSITE_PATH = '../website' #prob want absolute path
 HASH_BYTES = 1024
 
+UPLOAD_LIMIT = 5
+vid_upload_cnt = 0
+
 def main():
     if len(sys.argv) != 4:
-        print("Usage: python3 file2map <File Directory> <File Type> <Tag>")
-        print("File Types: Image=0, Video=1, Text=2")
+        print('Usage: python3 file2map <File Directory> <File Type> <Tag>')
+        print('File Types: Image=0, Video=1, Text=2')
         exit()
 
     dir = sys.argv[1]
@@ -32,6 +35,10 @@ def main():
         print(f'({cnt + 1}) Processing file \'{file}\'...')
         gen_file(file, json_data, dir, type, tag)
         print(f'\n-----------------------------')
+
+        if vid_upload_cnt >= UPLOAD_LIMIT:
+            print('Reached daily upload limit for youtube API. Stopping video processing...')
+            break
 
     print('All files uploaded. Writing json file.')
     write_json(json_data, WEBSITE_PATH, type)
@@ -73,7 +80,9 @@ def gen_file(file, json_data, file_dir, type, tag):
     if type is ft.IMAGE_TYPE:
         success = parse_img_metadata(file, file_dir, file_data)
     elif type is ft.VIDEO_TYPE:
-        success = parse_vid_name(file, file_data)
+        result = parse_vid_name(file, file_data)
+        success = result[0]
+        vid_title = result[1]
     elif type is ft.TEXT_TYPE:
         print("Todo")
     if not success:
@@ -91,8 +100,15 @@ def gen_file(file, json_data, file_dir, type, tag):
             print(f'Video \'{file}\' failed to render, skipping...')
             return
 
+        # get video description
+        if tag == '2023-Cross-Country-Trip':
+            vid_desc = 'This is some footage during my solo cross country trip riding a V-Strom 650xt. I rode 9000 miles in seven weeks from Georgia to Washington and back. Thanks for watching!'
+        else:
+            print(f'Tag \'{tag}\' does not have an associated video description, exiting...')
+            exit()
+
         # upload clip and get youtube url
-        url = c2yt.upload(render)
+        url = c2yt.upload(render, vid_title, vid_desc)
         if url is None:
             print(f'Video \'{file}\' failed to upload, skipping...')
             return
@@ -107,6 +123,9 @@ def gen_file(file, json_data, file_dir, type, tag):
 
     print(f'File \'{file}\' uploaded.')
     print(f'File Metadata: {file_data}.')
+
+    if type is VIDEO_TYPE:
+        vid_upload_cnt = vid_upload_cnt + 1
 
 def new_file_check(file_data, json_data):
     for marker in json_data['markers']:
@@ -149,21 +168,22 @@ def move_img(img, file_dir, file_data, web_dir):
 
     return rsrc_path
 
-# clips should follow the naming scheme:  poslong_poslat_.mp4
+# clips should follow the naming scheme:  poslong_poslat_Video Title_.mp4  (this is silly)
 def parse_vid_name(vid_name, vid_data):
     v = vid_name.split('_')
 
     try:
         vid_data.long = float(v[0])
         vid_data.lat = float(v[1])
+        title = v[2]
     except IndexError as e:
         print(f'Video name \'{vid_name}\' does not contain all components:\n\'poslat_poslot\'.')
-        return False
+        return (False, None)
     except ValueError as e:
         print(f'Longitude or Latitude in video name \'{vid_name}\' are not valid numbers.')
-        return False
+        return (False, None)
 
-    return True
+    return (True, vid_title)
 
 
 def render_vid(video):
