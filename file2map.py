@@ -28,18 +28,19 @@ def main():
     json_data = get_json(WEBSITE_PATH, type)
 
     # open directory with files
-    for file in os.listdir(dir):
-        print(f'Processing file \'{file}\'...')
+    for cnt, file in enumerate(os.listdir(dir)):
+        print(f'({cnt + 1}) Processing file \'{file}\'...')
         gen_file(file, json_data, dir, type, tag)
         print(f'\n-----------------------------')
 
     print('All files uploaded. Writing json file.')
-    # write_json(json_data, WEBSITE_PATH, type)
+    write_json(json_data, WEBSITE_PATH, type)
 
 
 def get_json(web_dir, type):
     map_path = f'{web_dir}/resources'
     
+    # This will break if json is empty
     if type is ft.IMAGE_TYPE:
         f = open(f'{map_path}/map-img.json', 'r')
     elif type is ft.VIDEO_TYPE:
@@ -70,7 +71,7 @@ def gen_file(file, json_data, file_dir, type, tag):
 
     # parsing metadata about the file
     if type is ft.IMAGE_TYPE:
-        success = parse_img_metadata(file, file_data)
+        success = parse_img_metadata(file, file_dir, file_data)
     elif type is ft.VIDEO_TYPE:
         success = parse_vid_name(file, file_data)
     elif type is ft.TEXT_TYPE:
@@ -82,7 +83,7 @@ def gen_file(file, json_data, file_dir, type, tag):
     # uploading file
     if type is ft.IMAGE_TYPE:
         # move image to website resource dir. store the path to image 
-        file_data.url = move_img(file, file_dir, WEBSITE_PATH)
+        file_data.url = move_img(file, file_dir, file_data, WEBSITE_PATH)
     elif type is ft.VIDEO_TYPE:
         # use moviepy to render/compress raw mp4
         render = render_vid(file)
@@ -106,7 +107,6 @@ def gen_file(file, json_data, file_dir, type, tag):
 
     print(f'File \'{file}\' uploaded.')
     print(f'File Metadata: {file_data}.')
-    print(f'Debug json: {json_data}')
 
 def new_file_check(file_data, json_data):
     for marker in json_data['markers']:
@@ -125,8 +125,8 @@ def assign_id(file, file_dir, file_data):
             
     file_data.id = hash
 
-def parse_img_metadata(img, img_data):
-    metadata = et.ExifToolHelper().get_tags(f'./test_dir/{img}', tags=['EXIF:GPSLatitude', 'EXIF:GPSLongitude'])    
+def parse_img_metadata(img, file_dir, img_data):
+    metadata = et.ExifToolHelper().get_tags(f'{file_dir}/{img}', tags=['EXIF:GPSLatitude', 'EXIF:GPSLongitude'])    
     for d in metadata:
         for k, v in d.items():
             if k == 'EXIF:GPSLatitude':
@@ -139,9 +139,11 @@ def parse_img_metadata(img, img_data):
                 
     return True
 
-def move_img(img, file_dir, web_dir):
+def move_img(img, file_dir, file_data, web_dir):
+    img_type = img.split('.')[1] # This is gonna break at somepoint
+    
     src_path = f'{file_dir}/{img}'
-    rsrc_path = f'/resources/images/{img}'
+    rsrc_path = f'/resources/images/{file_data.id}.{img_type}'
     dst_path = f'{web_dir}{rsrc_path}'
     shutil.copyfile(src_path, dst_path)
 
