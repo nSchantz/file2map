@@ -94,27 +94,28 @@ def gen_file(file, json_data, file_dir, type, tag):
         # move image to website resource dir. store the path to image 
         file_data.url = move_img(file, file_dir, file_data, WEBSITE_PATH)
     elif type is ft.VIDEO_TYPE:
-        # use moviepy to render/compress raw mp4
-        render = render_vid(file)
-        if render is None:
-            print(f'Video \'{file}\' failed to render, skipping...')
-            return
+        # use moviepy to render/compress raw mp4 (might not be needed)
+        render = f'{file_dir}/{file}'
+        # render = render_vid(file)
+        # if render is None:
+        #     print(f'Video \'{file}\' failed to render, skipping...')
+        #     return
 
         # get video description
         if tag == '2023-Cross-Country-Trip':
-            vid_desc = 'This is some footage during my solo cross country trip riding a V-Strom 650xt. I rode 9000 miles in seven weeks from Georgia to Washington and back. Thanks for watching!'
+            vid_desc = 'This is some footage during my solo cross country trip riding a V-Strom 650xt motorcycle. I rode 9000 miles in seven weeks from Georgia to Washington and back. Checkout the entire journey at https://www.schantz.dev/pages/map. Thanks for watching!'
         else:
             print(f'Tag \'{tag}\' does not have an associated video description, exiting...')
             exit()
 
         # upload clip and get youtube url
-        url = c2yt.upload(render, vid_title, vid_desc)
-        if url is None:
+        vid_id = c2yt.upload(render, vid_title, vid_desc)
+        if vid_id is None:
             print(f'Video \'{file}\' failed to upload, skipping...')
             return
 
         # store the youtube link for the video
-        vid_data.url = url
+        file_data.url = f'https://www.youtube.com/embed/{vid_id}'
     elif type is ft.TEXT_TYPE:
         print("Todo")
 
@@ -168,14 +169,14 @@ def move_img(img, file_dir, file_data, web_dir):
 
     return rsrc_path
 
-# clips should follow the naming scheme:  poslong_poslat_Video Title_.mp4  (this is silly)
+# clips should follow the naming scheme:  poslat_poslong_Video Title_.mp4  (this is silly)
 def parse_vid_name(vid_name, vid_data):
     v = vid_name.split('_')
 
     try:
         vid_data.long = float(v[0])
         vid_data.lat = float(v[1])
-        title = v[2]
+        vid_title = v[2].replace('-', ' ').replace('\\\'', '\'')
     except IndexError as e:
         print(f'Video name \'{vid_name}\' does not contain all components:\n\'poslat_poslot\'.')
         return (False, None)

@@ -26,7 +26,7 @@ def upload(render, video_title, video_description):
         "snippet": {
             "title": video_title,
             "description": video_description,
-            "tags": ["travel", "motorcycle", "solo travel", "cross country"]
+            "tags": ["travel", "motorcycle", "solo travel", "cross country", "v-strom", "vstrom", "gopro"]
         },
         "status": {
             "privacyStatus": "public"
@@ -35,7 +35,7 @@ def upload(render, video_title, video_description):
 
     print(f"Uploading {video_title}...")
 
-    media = MediaFileUpload("", chunksize=-1, resumable=True)
+    media = MediaFileUpload(render, chunksize=-1, resumable=True)
 
     request = youtube.videos().insert(
         part=",".join(request_body.keys()),
