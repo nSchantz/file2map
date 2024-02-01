@@ -125,8 +125,8 @@ def gen_file(file, json_data, file_dir, type, tag):
     print(f'File \'{file}\' uploaded.')
     print(f'File Metadata: {file_data}.')
 
-    if type is VIDEO_TYPE:
-        vid_upload_cnt = vid_upload_cnt + 1
+    if type is ft.VIDEO_TYPE:
+        global vid_upload_cnt = vid_upload_cnt + 1
 
 def new_file_check(file_data, json_data):
     for marker in json_data['markers']:
@@ -174,8 +174,8 @@ def parse_vid_name(vid_name, vid_data):
     v = vid_name.split('_')
 
     try:
-        vid_data.long = float(v[0])
-        vid_data.lat = float(v[1])
+        vid_data.lat = float(v[0])
+        vid_data.long = float(v[1])
         vid_title = v[2].replace('-', ' ').replace('\\\'', '\'')
     except IndexError as e:
         print(f'Video name \'{vid_name}\' does not contain all components:\n\'poslat_poslot\'.')
