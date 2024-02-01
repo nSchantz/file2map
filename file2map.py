@@ -126,7 +126,8 @@ def gen_file(file, json_data, file_dir, type, tag):
     print(f'File Metadata: {file_data}.')
 
     if type is ft.VIDEO_TYPE:
-        global vid_upload_cnt = vid_upload_cnt + 1
+        global vid_upload_cnt
+        vid_upload_cnt = vid_upload_cnt + 1
 
 def new_file_check(file_data, json_data):
     for marker in json_data['markers']:
