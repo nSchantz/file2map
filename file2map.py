@@ -10,6 +10,9 @@ import exiftool as et
 WEBSITE_PATH = '../website' #prob want absolute path
 HASH_BYTES = 1024
 
+JSON_READ = True
+JSON_WRITE = False
+
 UPLOAD_LIMIT = 5
 vid_upload_cnt = 0
 
@@ -28,7 +31,7 @@ def main():
         print(f'Path \'{dir}\' does not exist. Exiting...')
         exit()
 
-    json_data = get_json(WEBSITE_PATH, type)
+    json_data = rw_json(WEBSITE_PATH, type, JSON_READ, None)
 
     # open directory with files
     for cnt, file in enumerate(os.listdir(dir)):
@@ -41,27 +44,7 @@ def main():
             break
 
     print('All files uploaded. Writing json file.')
-    write_json(json_data, WEBSITE_PATH, type)
-
-
-def get_json(web_dir, type):
-    map_path = f'{web_dir}/resources'
-    
-    # This will break if json is empty
-    if type is ft.IMAGE_TYPE:
-        f = open(f'{map_path}/map-img.json', 'r')
-    elif type is ft.VIDEO_TYPE:
-        f = open(f'{map_path}/map-vid.json', 'r')
-    elif type is ft.TEXT_TYPE:
-        f = open(f'{map_path}/map-txt.json', 'r')
-    else:
-        print('File Type is invalid. Exiting...')
-        exit()
-
-    json_data = json.load(f)
-    f.close()
-    return json_data
-
+    rw_json(WEBSITE_PATH, type, JSON_WRITE, json_data)
 
 def gen_file(file, json_data, file_dir, type, tag):
     file_data = ft.FileData()
@@ -78,7 +61,7 @@ def gen_file(file, json_data, file_dir, type, tag):
 
     # parsing metadata about the file
     if type is ft.IMAGE_TYPE:
-        success = parse_img_metadata(file, file_dir, file_data)
+        success = parse_file_metadata(file, file_dir, file_data)
     elif type is ft.VIDEO_TYPE:
         result = parse_vid_name(file, file_data)
         success = result[0]
@@ -94,13 +77,6 @@ def gen_file(file, json_data, file_dir, type, tag):
         # move image to website resource dir. store the path to image 
         file_data.url = move_img(file, file_dir, file_data, WEBSITE_PATH)
     elif type is ft.VIDEO_TYPE:
-        # use moviepy to render/compress raw mp4 (might not be needed)
-        render = f'{file_dir}/{file}'
-        # render = render_vid(file)
-        # if render is None:
-        #     print(f'Video \'{file}\' failed to render, skipping...')
-        #     return
-
         # get video description
         if tag == '2023-Cross-Country-Trip':
             vid_desc = 'This is some footage during my solo cross country trip riding a V-Strom 650xt motorcycle. I rode 9000 miles in seven weeks from Georgia to Washington and back. Checkout the entire journey at https://www.schantz.dev/pages/map. Thanks for watching!'
@@ -109,7 +85,7 @@ def gen_file(file, json_data, file_dir, type, tag):
             exit()
 
         # upload clip and get youtube url
-        vid_id = c2yt.upload(render, vid_title, vid_desc)
+        vid_id = c2yt.upload(f'{file_dir}/{file}', vid_title, vid_desc)
         if vid_id is None:
             print(f'Video \'{file}\' failed to upload, skipping...')
             return
@@ -146,16 +122,17 @@ def assign_id(file, file_dir, file_data):
             
     file_data.id = hash
 
-def parse_img_metadata(img, file_dir, img_data):
-    metadata = et.ExifToolHelper().get_tags(f'{file_dir}/{img}', tags=['EXIF:GPSLatitude', 'EXIF:GPSLongitude'])    
+def parse_file_metadata(file, file_dir, file_data):
+    metadata = et.ExifToolHelper().get_tags(f'{file_dir}/{file}', tags=['EXIF:GPSLatitude', 'EXIF:GPSLongitude'])    
+    print(metadata)
     for d in metadata:
         for k, v in d.items():
             if k == 'EXIF:GPSLatitude':
-                img_data.lat = float(v)
+                file_data.lat = float(v)
             if k == 'EXIF:GPSLongitude':
-                img_data.long = float(v)
+                file_data.long = float(v)
 
-    if img_data.lat is None or img_data.long is None:
+    if file_data.lat is None or file_data.long is None:
         return False
                 
     return True
@@ -188,27 +165,33 @@ def parse_vid_name(vid_name, vid_data):
     return (True, vid_title)
 
 
-def render_vid(video):
-    print("Stub")
-
-
 def update_json(file_data, json_data):
     file_data_dict = ft.asdict(file_data)
     json_data['markers'].append(file_data_dict)
 
-def write_json(json_data, web_dir, type):
+
+def rw_json(web_dir, type, read, json_data):
     map_path = f'{web_dir}/resources'
-
-    if type is ft.IMAGE_TYPE:
-        f = open(f'{map_path}/map-img.json', 'w')
-    elif type is ft.VIDEO_TYPE:
-        f = open(f'{map_path}/map-vid.json', 'w')
-    elif type is ft.TEXT_TYPE:
-        f = open(f'{map_path}/map-txt.json', 'w')
-
-    json.dump(json_data, f, indent=2)
-    f.close()
     
+    # This will break if json is empty
+    if type is ft.IMAGE_TYPE:
+        f = open(f'{map_path}/map-img.json', f'{"r" if read else "w"}')
+    elif type is ft.VIDEO_TYPE:
+        f = open(f'{map_path}/map-vid.json', f'{"r" if read else "w"}')
+    elif type is ft.TEXT_TYPE:
+        f = open(f'{map_path}/map-txt.json', f'{"r" if read else "w"}')
+    else:
+        print('File Type is invalid. Exiting...')
+        exit()
+
+    if read:
+        json_data = json.load(f)
+        f.close()
+        return json_data
+    else:
+        json.dump(json_data, f, indent=2)
+        f.close()
+        
 
 if __name__ == '__main__':
     main()

@@ -3,7 +3,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
      
-def upload(render, video_title, video_description): 
+def upload(video, video_title, video_description): 
     # Set up OAuth 2.0 credentials
     CLIENT_SECRETS_FILE = "./api/client_secret.json"
     API_NAME = "youtube"
@@ -15,11 +15,6 @@ def upload(render, video_title, video_description):
 
     # Create a YouTube API service
     youtube = build(API_NAME, API_VERSION, credentials=credentials)
-
-    # Specify video details
-    # video_title = "My Video Title"
-    # video_description = "Description for my video"
-    # video_tags = ["tag1", "tag2"]
 
     # Upload video
     request_body = {
@@ -35,7 +30,7 @@ def upload(render, video_title, video_description):
 
     print(f"Uploading {video_title}...")
 
-    media = MediaFileUpload(render, chunksize=-1, resumable=True)
+    media = MediaFileUpload(video, chunksize=-1, resumable=True)
 
     request = youtube.videos().insert(
         part=",".join(request_body.keys()),
